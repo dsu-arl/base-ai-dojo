@@ -2,15 +2,6 @@
 import sys
 sys.path.append('/challenge')
 
-def print_flag():
-    try:
-        with open("/flag", "r") as f:
-            print(f.read())
-    except FileNotFoundError:
-        print("Error: Flag file not found.")
-
-# Add your imports and other code below here
-from paceAITester.config import GREEN_TEXT_CODE, RED_TEXT_CODE, RESET_CODE
 from paceAITester.datatypes import FunctionCall
 from paceAITester.verify_helpers import *
 from typing import Tuple
@@ -26,6 +17,13 @@ class Validator:
         self.y = None
         self.model = None
         self.predictions = None
+
+        self.checks = [
+            self._step_1_check, self._step_2_check,
+            self._step_3_check, self._step_4_check,
+            self._step_5_check, self._step_6_check,
+            self._step_7_check, self._step_8_check
+        ]
 
     def _step_1_check(self) -> Tuple[bool, str]:
         """
@@ -244,21 +242,7 @@ class Validator:
         return True, ''
 
     def verify_code(self) -> None:
-        checks = [
-            self._step_1_check, self._step_2_check, self._step_3_check, self._step_4_check,
-            self._step_5_check, self._step_6_check, self._step_7_check, self._step_8_check
-        ]
-        for step, check_func in enumerate(checks, 1):
-            is_correct, error_msg = check_func()
-            if is_correct:
-                print(f'{GREEN_TEXT_CODE}Step {step} Passed{RESET_CODE}')
-            else:
-                print(f'{RED_TEXT_CODE}Step {step} Failed{RESET_CODE}')
-                print(error_msg)
-                sys.exit(1)
-        
-        print('Congratulations! You have passed this challenge! Here is your flag:')
-        print_flag()
+        run_verification(self.checks)
 
 
 if __name__ == '__main__':
