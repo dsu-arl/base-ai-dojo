@@ -12,12 +12,8 @@ def print_flag():
 # Add your imports and other code below here
 from paceAITester.config import GREEN_TEXT_CODE, RED_TEXT_CODE, RESET_CODE
 from paceAITester.datatypes import FunctionCall
-from paceAITester.verify_helpers import extract_python_details, find_function_call, output_not_assigned_to_variable
-from typing import List, Dict, Tuple
-
-
-def function_not_called(function_calls: List[Dict]) -> bool:
-    return len(function_calls) == 0
+from paceAITester.verify_helpers import *
+from typing import Tuple
 
 
 class Validator:
@@ -39,15 +35,13 @@ class Validator:
                 and a string message providing error details if failure.
         :rtype: tuple[bool, str]
         """
-        # Correctly imports tensorflow as tf and numpy as np
-        with open(self.script_path, 'r') as file:
-            file_contents = file.read()
-        file_contents = file_contents.split('\n')
-        
-        if 'import tensorflow as tf' not in file_contents:
+        with open(self.script_path, 'r') as f:
+            file_lines = f.read().split('\n')
+
+        if 'import tensorflow as tf' not in file_lines:
             return False, 'Missing or incorrect tensorflow import line, did you import it with the specified alias?'
         
-        if 'import numpy as np' not in file_contents:
+        if 'import numpy as np' not in file_lines:
             return False, 'Missing or incorrect numpy import line, did you import it with the specified alias?'
     
         return True, ''
@@ -109,12 +103,9 @@ class Validator:
         self.model = function_call.variable
 
         # Make sure that args only contains Dense layer with correct arguments
-        if len(function_call.args) > 1:
-            return False, f'{self.model} should only contain a single Dense layer'
-
         solution_args = ["[tf.keras.layers.Dense(units=1, input_shape=[2], activation='sigmoid')]"]
         if function_call.args != solution_args:
-            return False, 'Missing or incorrect parameters for Dense layer'
+            return False, "Missing or incorrect parameters for Dense layer or model doesn't contain only a single Dense layer"
 
         return True, ''
 
@@ -130,17 +121,17 @@ class Validator:
         function_calls = find_function_call(self.lines, function_name)
 
         if function_not_called(function_calls):
-            return False, f"{function_name} isn't called"
+            return False, f"{function_name}() isn't called"
         if len(function_calls) > 1:
-            return False, f"{function_name} should only be called once"
+            return False, f"{function_name}() should only be called once"
     
         function_call = FunctionCall.from_dict(function_calls[0])
         if function_call.variable is not None:
-            return False, f"{self.model}.compile() shouldn't be assigned to a variable"
+            return False, f"{function_name}() shouldn't be assigned to a variable"
         
         solution_kwargs = {'optimizer': "'adam'", 'loss': "'binary_crossentropy'"}
         if function_call.kwargs != solution_kwargs:
-            return False, f"Missing or incorrect optimizer and loss function passed to {self.model}.compile()"
+            return False, f"Missing or incorrect optimizer and loss function passed to {function_name}()"
 
         return True, ''
 
@@ -156,17 +147,17 @@ class Validator:
         function_calls = find_function_call(self.lines, function_name)
 
         if function_not_called(function_calls):
-            return False, f"{function_name} isn't called"
+            return False, f"{function_name}() isn't called"
         if len(function_calls) > 1:
-            return False, f"{function_name} should only be called once"
+            return False, f"{function_name}() should only be called once"
         
         function_call = FunctionCall.from_dict(function_calls[0])
         if function_call.variable is not None:
-            return False, f"{self.model}.compile() shouldn't be assigned to a variable"
-        
+            return False, f"{function_name}() shouldn't be assigned to a variable"
+
         solution_args = [self.X, self.y]
         if function_call.args != solution_args:
-            return False, f"Missing or incorrect parameters, are you passing your dataset and labels to {self.model}.fit()?"
+            return False, f"Missing or incorrect parameters, are you passing your dataset and labels to {function_name}()?"
 
         solution_kwargs = {'epochs': '1000', 'verbose': '0'}
         if function_call.kwargs != solution_kwargs:
@@ -187,45 +178,48 @@ class Validator:
         function_calls = find_function_call(self.lines, predict_function_name)
 
         if function_not_called(function_calls):
-            return False, f"{predict_function_name} isn't called"
+            return False, f"{predict_function_name}() isn't called"
         if len(function_calls) > 1:
-            return False, f"{predict_function_name} should only be called once"
+            return False, f"{predict_function_name}() should only be called once"
         
         function_call = FunctionCall.from_dict(function_calls[0])
         if output_not_assigned_to_variable(function_call):
-            return False, f'{predict_function_name} output should be assigned to a variable'
+            return False, f'{predict_function_name}() output should be assigned to a variable'
 
         self.predictions = function_call.variable
 
         solution_args = [self.X]
         if function_call.args != solution_args:
-            return False, f'{predict_function_name} should take a single argument {self.X}'
+            return False, f'{predict_function_name}() should take a single argument {self.X}'
         
         solution_kwargs = {}
         if function_call.kwargs != solution_kwargs:
-            return False, f'{predict_function_name} should not have any keyword arguments for this challenge.'
-
-        # Validation for predictions.round()
-        round_function_name = f'{self.predictions}.round'
-        function_calls = find_function_call(self.lines, round_function_name)
-
-        if function_not_called(function_calls):
-            return False, f"{round_function_name} isn't called"
-        if len(function_calls) > 1:
-            return False, f"{round_function_name} should only be called once"
-        
-        function_call = FunctionCall.from_dict(function_calls[0])
-
-        if function_call.args != [] or function_call.kwargs != []:
-            return False, f"{round_function_name} shouldn't have any parameters passed to it"
-
-        # Reassign self.predictions if user stored result in new variable after rounding
-        if function_call.variable is not None and function_call.variable != self.predictions:
-            self.predictions = function_call.variable
+            return False, f'{predict_function_name}() should not have any keyword arguments for this challenge'
 
         return True, ''
 
     def _step_7_check(self) -> Tuple[bool, str]:
+        # Validation for predictions.round()
+        function_name = f'{self.predictions}.round'
+        function_calls = find_function_call(self.lines, function_name)
+
+        if function_not_called(function_calls):
+            return False, f"{function_name}() isn't called"
+        if len(function_calls) > 1:
+            return False, f"{function_name}() should only be called once"
+        
+        function_call = FunctionCall.from_dict(function_calls[0])
+
+        if function_call.args != [] or function_call.kwargs != {}:
+            return False, f"{function_name}() shouldn't have any parameters passed to it for this challenge"
+
+        # Reassign self.predictions if user stored result in new variable after rounding
+        if function_call.variable is not None and function_call.variable != self.predictions:
+            self.predictions = function_call.variable
+        
+        return True, ''
+
+    def _step_8_check(self) -> Tuple[bool, str]:
         """
         Step Goal: Print the rounded predictions from the trained model.
 
@@ -237,29 +231,27 @@ class Validator:
         function_calls = find_function_call(self.lines, function_name)
 
         if function_not_called(function_calls):
-            return False, f"{function_name} isn't called"
+            return False, f"{function_name}() isn't called"
         if len(function_calls) > 1:
-            return False, f"{function_name} should only be called once"
+            return False, f"{function_name}() should only be called once"
         
         function_call = FunctionCall.from_dict(function_calls[0])
 
         solution_args = [self.predictions]
         if function_call.args != solution_args:
-            return False, f'Incorrect parameters passed to print(), are you passing your rounded predictions to the print() function?'
+            return False, f'Incorrect parameters passed to {function_name}(), are you passing your rounded predictions to the {function_name}() function?'
 
         return True, ''
 
     def verify_code(self) -> None:
         checks = [
             self._step_1_check, self._step_2_check, self._step_3_check, self._step_4_check,
-            self._step_5_check, self._step_6_check, self._step_7_check
+            self._step_5_check, self._step_6_check, self._step_7_check, self._step_8_check
         ]
-        step = 1
-        for check_func in checks:
+        for step, check_func in enumerate(checks, 1):
             is_correct, error_msg = check_func()
             if is_correct:
                 print(f'{GREEN_TEXT_CODE}Step {step} Passed{RESET_CODE}')
-                step += 1
             else:
                 print(f'{RED_TEXT_CODE}Step {step} Failed{RESET_CODE}')
                 print(error_msg)

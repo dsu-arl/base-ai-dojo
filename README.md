@@ -70,3 +70,8 @@ To add the update code as a GitHub secret:
 
 ### Reference
 [pwncollege/dojo-update](https://github.com/pwncollege/dojo-update)
+
+### Running Unit Tests
+1. Navigate to the directory of the challenge you want to run the unit tests in.
+2. Make sure `pytest` is installed (if not installed, run `pip install pytest`)
+3. Run `python -m pytest tests/`. To get more output, run `python -m pytest -v tests/`
