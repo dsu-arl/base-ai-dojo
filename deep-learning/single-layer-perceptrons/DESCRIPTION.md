@@ -62,7 +62,7 @@ Expected predictions after rounding might be:
  [0.]
  [1.]]
 ```
-though results can vary slightly due to random weight initialization.
+Though results can vary slightly due to random weight initialization.
 
 ### Challenge Instructions
 Create a new Python file in your home directory and follow these steps to complete this challenge!
