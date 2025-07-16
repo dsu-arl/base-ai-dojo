@@ -65,7 +65,7 @@ Expected predictions after rounding might be:
 Though results can vary slightly due to random weight initialization.
 
 ### Challenge Instructions
-Create a new Python file in your home directory and follow these steps to complete this challenge!
+Create a new Python file in `/home/hacker` directory and follow these steps to complete this challenge!
 1. Import the required libraries with these aliases: `tensorflow as tf` and `numpy as np`.
 2. Define a dataset with the following:
     * Input `X`: A 4x2 NumPy array `[[0, 0], [0, 1], [1, 0], [1, 1]]` representing input pairs.
