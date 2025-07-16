@@ -16,3 +16,6 @@
 [submodule "machine-learning/hyperparameters/paceAITester"]
 	path = machine-learning/hyperparameters/paceAITester
 	url = https://github.com/dsu-arl/paceAITester
+[submodule "deep-learning/single-layer-perceptrons/paceAITester"]
+	path = deep-learning/single-layer-perceptrons/paceAITester
+	url = https://github.com/dsu-arl/paceAITester
