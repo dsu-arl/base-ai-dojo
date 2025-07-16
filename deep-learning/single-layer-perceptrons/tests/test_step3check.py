@@ -6,7 +6,8 @@ class TestStep3Check(BaseTestValidator):
     def test_success(self):
         script_content = """
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(units=1, input_shape=[2], activation='sigmoid')
+    tf.keras.layers.Input(shape=(2,)),
+    tf.keras.layers.Dense(units=1, activation='sigmoid')
 ])
 """
         validator = self.create_validator(script_content)
@@ -44,9 +45,18 @@ tf.keras.Sequential()
     def test_incorrect_model_args(self):
         cases = [
             {
+                'desc': 'missing Input layer',
+                'script_content': """
+model = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=1, activation='sigmoid')
+])
+"""
+            },
+            {
                 'desc': 'missing Dense layer parameters',
                 'script_content': """
 model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(2,)),
     tf.keras.layers.Dense()
 ])
 """
@@ -55,15 +65,17 @@ model = tf.keras.Sequential([
                 'desc': 'incorrect units parameter value',
                 'script_content': """
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(units=5, input_shape=[2], activation='sigmoid')
+    tf.keras.layers.Input(shape=(2,)),
+    tf.keras.layers.Dense(units=5, activation='sigmoid')
 ])
 """
             },
             {
-                'desc': 'incorrect input_shape parameter value',
+                'desc': 'incorrect input shape parameter value',
                 'script_content': """
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(units=1, input_shape=[4], activation='sigmoid')
+    tf.keras.layers.Input(shape=(4,)),
+    tf.keras.layers.Dense(units=1, activation='sigmoid')
 ])
 """
             },
@@ -71,7 +83,8 @@ model = tf.keras.Sequential([
                 'desc': 'incorrect activation parameter value',
                 'script_content': """
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(units=1, input_shape=[2], activation='relu')
+    tf.keras.layers.Input(shape=(2,)),
+    tf.keras.layers.Dense(units=1, activation='relu')
 ])
 """
             }
@@ -81,7 +94,7 @@ model = tf.keras.Sequential([
                 validator = self.create_validator(case['script_content'])
                 is_correct, msg = validator._step_3_check()
                 self.assertFalse(is_correct)
-                self.assertEqual(msg, "Missing or incorrect parameters for Dense layer or model doesn't contain only a single Dense layer")
+                self.assertEqual(msg, "Missing or incorrect layers for perceptron")
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import unittest
 class TestStep5Check(BaseTestValidator):
     def test_success(self):
         script_content = """
-model.fit(X, y, epochs=1000, verbose=0)
+model.fit(X, y, epochs=100, verbose=1)
 """
         validator = self.create_validator(script_content)
         validator.X = 'X'
@@ -25,8 +25,8 @@ model.fit(X, y, epochs=1000, verbose=0)
     
     def test_fit_called_more_than_once(self):
         script_content = """
-model.fit(X, y, epochs=1000, verbose=0)
-model.fit(X, y, epochs=1000, verbose=0)
+model.fit(X, y, epochs=100, verbose=1)
+model.fit(X, y, epochs=100, verbose=1)
 """
         validator = self.create_validator(script_content)
         validator.model = 'model'
@@ -36,7 +36,7 @@ model.fit(X, y, epochs=1000, verbose=0)
     
     def test_fit_output_assigned_to_variable(self):
         script_content = """
-test = model.fit(X, y, epochs=1000, verbose=0)
+test = model.fit(X, y, epochs=100, verbose=1)
 """
         validator = self.create_validator(script_content)
         validator.model = 'model'
@@ -48,11 +48,11 @@ test = model.fit(X, y, epochs=1000, verbose=0)
         cases = [
             {
                 'desc': 'Missing X parameter',
-                'script_content': 'model.fit([], y, epochs=1000, verbose=0)'
+                'script_content': 'model.fit([], y, epochs=100, verbose=1)'
             },
             {
                 'desc': 'Missing y parameter',
-                'script_content': 'model.fit(X, [], epochs=1000, verbose=0)'
+                'script_content': 'model.fit(X, [], epochs=100, verbose=1)'
             }
         ]
         for case in cases:
@@ -69,19 +69,19 @@ test = model.fit(X, y, epochs=1000, verbose=0)
         cases = [
             {
                 'desc': 'Missing epochs parameter',
-                'script_content': 'model.fit(X, y, verbose=0)'
+                'script_content': 'model.fit(X, y, verbose=1)'
             },
             {
                 'desc': 'Incorrect epochs parameter',
-                'script_content': 'model.fit(X, y, epochs=100, verbose=0)'
+                'script_content': 'model.fit(X, y, epochs=50, verbose=1)'
             },
             {
                 'desc': 'Missing verbose parameter',
-                'script_content': 'model.fit(X, y, epochs=1000)'
+                'script_content': 'model.fit(X, y, epochs=100)'
             },
             {
                 'desc': 'Incorrect verbose parameter',
-                'script_content': 'model.fit(X, y, epochs=1000, verbose=1)'
+                'script_content': 'model.fit(X, y, epochs=100, verbose=0)'
             }
         ]
         for case in cases:
@@ -92,7 +92,7 @@ test = model.fit(X, y, epochs=1000, verbose=0)
                 validator.model = 'model'
                 is_correct, msg = validator._step_5_check()
                 self.assertFalse(is_correct)
-                self.assertEqual(msg, 'Missing or incorrect parameters, are you training for 1000 epochs and suppressing the training output?')
+                self.assertEqual(msg, 'Missing or incorrect parameters, are you training for 100 epochs and outputting the training output?')
 
 
 if __name__ == '__main__':

@@ -101,9 +101,9 @@ class Validator:
         self.model = function_call.variable
 
         # Make sure that args only contains Dense layer with correct arguments
-        solution_args = ["[tf.keras.layers.Dense(units=1, input_shape=[2], activation='sigmoid')]"]
+        solution_args = ["[tf.keras.layers.Input(shape=(2,)), tf.keras.layers.Dense(units=1, activation='sigmoid')]"]
         if function_call.args != solution_args:
-            return False, "Missing or incorrect parameters for Dense layer or model doesn't contain only a single Dense layer"
+            return False, "Missing or incorrect layers for perceptron"
 
         return True, ''
 
@@ -135,7 +135,7 @@ class Validator:
 
     def _step_5_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Train the model for 1000 epochs.
+        Step Goal: Train the model for 100 epochs.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
@@ -157,9 +157,9 @@ class Validator:
         if function_call.args != solution_args:
             return False, f"Missing or incorrect parameters, are you passing your dataset and labels to {function_name}()?"
 
-        solution_kwargs = {'epochs': '1000', 'verbose': '0'}
+        solution_kwargs = {'epochs': '100', 'verbose': '1'}
         if function_call.kwargs != solution_kwargs:
-            return False, f"Missing or incorrect parameters, are you training for 1000 epochs and suppressing the training output?"
+            return False, f"Missing or incorrect parameters, are you training for 100 epochs and outputting the training output?"
 
         return True, ''
 
