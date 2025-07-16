@@ -66,13 +66,13 @@ Though results can vary slightly due to random weight initialization.
 
 ### Challenge Instructions
 Create a new Python file in your home directory and follow these steps to complete this challenge!
-1. Import the required libraries: `tensorflow as tf` and `numpy as np`.
+1. Import the required libraries with these aliases: `tensorflow as tf` and `numpy as np`.
 2. Define a dataset with the following:
     * Input `X`: A 4x2 NumPy array `[[0, 0], [0, 1], [1, 0], [1, 1]]` representing input pairs.
     * Output `y`: A 4x1 NumPy array `[[0], [1], [1], [1]]` representing logical OR labels (1 if at least one input is 1).
 3. Build a single-layer perceptron using `tf.keras.Sequential` with:
     * `Input` layer that accepts 2 inputs
-    * One `Dense` layer with 1 unit and a `sigmoid` activation to output values between 0 and 1
+    * One `Dense` layer with 1 unit and a `sigmoid` activation function to output values between 0 and 1
 4. Compile the model with:
     * `adam` optimizer for efficient gradient descent.
     * `binary_crossentropy` loss function, suitable for binary classification.
