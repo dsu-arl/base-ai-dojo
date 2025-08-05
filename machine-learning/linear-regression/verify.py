@@ -222,8 +222,6 @@ class Validator:
         
         if function_call.variable is not None:
             return False, f"{function_name}() shouldn't be assigned to any variables"
-        
-        print('Function call args:', function_call.args)
 
         if function_call.args != [self._mse]:
             return False, 'Are you printing out the correct variable for the MSE?'
