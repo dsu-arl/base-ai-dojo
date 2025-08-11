@@ -219,11 +219,11 @@ class Validator:
             return False, f"{function_name}() shouldn't be called more than once"
         
         function_call = FunctionCall.from_dict(function_calls[0])
-        
+
         if function_call.variable is not None:
             return False, f"{function_name}() shouldn't be assigned to any variables"
 
-        if function_call.args != [self._accuracy]:
+        if self._accuracy not in function_call.args:
             return False, 'Are you printing out the correct variable for the accuracy?'
         
         if function_call.kwargs != {} and function_call.args:
