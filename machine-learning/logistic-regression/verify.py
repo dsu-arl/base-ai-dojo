@@ -19,7 +19,7 @@ class Validator:
         self._y_test = None
         self._model = None
         self._y_pred = None
-        self._mse = None
+        self._accuracy = None
 
         self._checks = [
             self._step_1_check, self._step_2_check, self._step_3_check,
@@ -55,6 +55,179 @@ class Validator:
         solution_kwargs = {'test_size': '0.2', 'random_state': '42'}
         if function_call.kwargs != solution_kwargs:
             return False, "train_test_split() parameters don't match what's expected, did you give 'test_size' and 'random_state' the correct values from the instructions?"
+
+        return True, ''
+
+    def _step_2_check(self) -> Tuple[bool, str]:
+        """
+        Step Goal: Initialize a logistic regression model.
+
+        :return: A tuple containing a boolean indicating success or failure of the validation,
+                and a string message providing error details if failure.
+        :rtype: tuple[bool, str]
+        """
+        function_name = 'LogisticRegression'
+        function_calls = find_function_call(self._lines, function_name)
+
+        if function_not_called(function_calls):
+            return False, f"{function_name}() isn't called"
+        if len(function_calls) != 1:
+            return False, f'{function_name}() should only be called once'
+        
+        function_call = FunctionCall.from_dict(function_calls[0])
+
+        if function_call.variable is None:
+            return False, f'{function_name}() should be assigned to a variable'
+        self._model = function_call.variable
+
+        if function_call.args != [] or function_call.kwargs != {}:
+            return False, f"You shouldn't be passing any parameters to {function_name}() for this challenge"
+
+        return True, ''
+    
+    def _step_3_check(self) -> Tuple[bool, str]:
+        """
+        Step Goal: Fit the linear regression model to the training dataset.
+
+        :return: A tuple containing a boolean indicating success or failure of the validation,
+                and a string message providing error details if failure.
+        :rtype: tuple[bool, str]
+        """
+        function_name = f'{self._model}.fit'
+        function_calls = find_function_call(self._lines, function_name)
+
+        if function_not_called(function_calls):
+            return False, f"{function_name}() isn't called"
+        if len(function_calls) != 1:
+            return False, f"{function_name}() shouldn't be called more than once"
+        
+        function_call = FunctionCall.from_dict(function_calls[0])
+
+        if function_call.variable is not None:
+            return False, f"{function_name}() shouldn't be assigned to any variables"
+        
+        check_passed = True
+        # Solution 1
+        if not function_call.kwargs:
+            if function_call.args != [self._X_train, self._y_train]:
+                check_passed = False
+        # Solution 2
+        elif not function_call.args:
+            if function_call.kwargs != {'X': self._X_train, 'y': self._y_train}:
+                check_passed = False
+        else:
+            check_passed = False
+        
+        if not check_passed:
+            return False, f'Incorrect parameters for {function_name}(), are you correctly passing the training data to it?'
+
+        return True, ''
+    
+    def _step_4_check(self) -> Tuple[bool, str]:
+        """
+        Step Goal: Make predictions on the test iris dataset using the trained logistic regression model.
+
+        :return: A tuple containing a boolean indicating success or failure of the validation,
+                and a string message providing error details if failure.
+        :rtype: tuple[bool, str]
+        """
+        function_name = f'{self._model}.predict'
+        function_calls = find_function_call(self._lines, function_name)
+
+        if function_not_called(function_calls):
+            return False, f"{function_name}() isn't called"
+        if len(function_calls) != 1:
+            return False, f"{function_name}() shouldn't be called more than once"
+        
+        function_call = FunctionCall.from_dict(function_calls[0])
+
+        if not isinstance(function_call.variable, str) or function_call.variable is None:
+            return False, f"{function_name}() should only be assigned to a single variable"
+        
+        self._y_pred = function_call.variable
+
+        check_passed = True
+        # Solution 1
+        if not function_call.kwargs:
+            if function_call.args != [self._X_test]:
+                check_passed = False
+        # Solution 2
+        elif not function_call.args:
+            if function_call.kwargs != {'X': self._X_test}:
+                check_passed = False
+        else:
+            check_passed = False
+        
+        if not check_passed:
+            return False, f'Incorrect parameters for {function_name}(), are you correctly passing the test data to it?'
+        
+        return True, ''
+    
+    def _step_5_check(self) -> Tuple[bool, str]:
+        """
+        Step Goal: Retrieve the model's test dataset accuracy.
+
+        :return: A tuple containing a boolean indicating success or failure of the validation,
+                and a string message providing error details if failure.
+        :rtype: tuple[bool, str]
+        """
+        function_name = 'accuracy_score'
+        function_calls = find_function_call(self._lines, function_name)
+
+        if function_not_called(function_calls):
+            return False, f"{function_name}() isn't called"
+        if len(function_calls) != 1:
+            return False, f"{function_name}() shouldn't be called more than once"
+        
+        function_call = FunctionCall.from_dict(function_calls[0])
+
+        if not isinstance(function_call.variable, str) or function_call.variable is None:
+            return False, f"{function_name}() should only be assigned to a single variable"
+
+        self._accuracy = function_call.variable
+
+        check_passed = True
+        # Solution 1
+        if not function_call.kwargs:
+            if function_call.args != [self._y_test, self._y_pred]:
+                check_passed = False
+        # Solution 2
+        elif not function_call.args:
+            if function_call.kwargs != {'y_true': self._y_test, 'y_pred': self._y_pred}:
+                check_passed = False
+        else:
+            check_passed = False
+        
+        if not check_passed:
+            return False, f'Incorrect parameters for {function_name}(), are you correctly passing the test output and model output to it?'
+
+        return True, ''
+    
+    def _step_6_check(self) -> Tuple[bool, str]:
+        """
+        Step Goal: Print out the model's accuracy
+        :return: A tuple containing a boolean indicating success or failure of the validation,
+                and a string message providing error details if failure.
+        :rtype: tuple[bool, str]
+        """
+        function_name = 'print'
+        function_calls = find_function_call(self._lines, function_name)
+        
+        if function_not_called(function_calls):
+            return False, f"{function_name}() isn't called"
+        if len(function_calls) != 1:
+            return False, f"{function_name}() shouldn't be called more than once"
+        
+        function_call = FunctionCall.from_dict(function_calls[0])
+        
+        if function_call.variable is not None:
+            return False, f"{function_name}() shouldn't be assigned to any variables"
+
+        if function_call.args != [self._accuracy]:
+            return False, 'Are you printing out the correct variable for the accuracy?'
+        
+        if function_call.kwargs != {} and function_call.args:
+            return False, "You don't need any keyword arguments for this print statement"
 
         return True, ''
 
