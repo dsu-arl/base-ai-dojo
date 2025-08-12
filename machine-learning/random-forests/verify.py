@@ -52,7 +52,7 @@ class Validator:
         if function_call.args != ['X', 'y']:
             return False, 'You need to pass X and y to train_test_split() so knows what data to split'
         
-        solution_kwargs = {'test_size': '0.2', 'random_state': '42'}
+        solution_kwargs = {'test_size': '0.3', 'random_state': '23'}
         if function_call.kwargs != solution_kwargs:
             return False, "train_test_split() parameters don't match what's expected, did you give 'test_size' and 'random_state' the correct values from the instructions?"
 
@@ -60,13 +60,13 @@ class Validator:
 
     def _step_2_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Initialize a logistic regression model.
+        Step Goal: Initialize a random forest classifier model.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
         :rtype: tuple[bool, str]
         """
-        function_name = 'LogisticRegression'
+        function_name = 'RandomForestClassifier'
         function_calls = find_function_call(self._lines, function_name)
 
         if function_not_called(function_calls):
@@ -87,7 +87,7 @@ class Validator:
     
     def _step_3_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Fit the logistic regression model to the training dataset.
+        Step Goal: Fit the random forest model to the training dataset.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
@@ -125,7 +125,7 @@ class Validator:
     
     def _step_4_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Make predictions on the test iris dataset using the trained logistic regression model.
+        Step Goal: Make predictions on the test iris dataset using the trained random forest model.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
