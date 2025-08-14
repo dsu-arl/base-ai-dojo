@@ -81,7 +81,7 @@ class Validator:
         passed, error_msg = self._check_answer()
         if not passed:
             print(f"{red_text_code}{error_msg}{reset_code}")
-        sys.exit(1)
+            sys.exit(1)
     
         print(f'{green_text_code}Correct{reset_code}')
         print('Congratulations! You have passed this challenge! Here is your flag:')
