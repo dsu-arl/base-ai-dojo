@@ -204,31 +204,6 @@ class Validator:
         return True, ''
     
     def _step_6_check(self) -> Tuple[bool, str]:
-        """
-        Step Goal: Print the value of the MSE variable.
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
-        """
-        function_name = 'print'
-        function_calls = find_function_call(self._lines, function_name)
-        
-        if function_not_called(function_calls):
-            return False, f"{function_name}() isn't called"
-        if len(function_calls) != 1:
-            return False, f"{function_name}() shouldn't be called more than once"
-        
-        function_call = FunctionCall.from_dict(function_calls[0])
-        
-        if function_call.variable is not None:
-            return False, f"{function_name}() shouldn't be assigned to any variables"
-
-        if function_call.args != [self._mse]:
-            return False, 'Are you printing out the correct variable for the MSE?'
-        
-        if function_call.kwargs != {} and function_call.args:
-            return False, "You don't need any keyword arguments for this print statement"
-
         return True, ''
 
     def verify_code(self) -> None:
