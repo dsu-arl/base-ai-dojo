@@ -38,4 +38,4 @@ y = iris.target
 5. Retrieve the model's test dataset accuracy and store it in a variable
 6. Print out the model's accuracy
 
-You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `verify <your_file>.py`.
+You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `/challenge/verify <your_file>.py`.
