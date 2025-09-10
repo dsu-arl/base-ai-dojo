@@ -87,7 +87,7 @@ class Validator:
     
     def _step_3_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Fit the linear regression model to the training dataset.
+        Step Goal: Fit the logistic regression model to the training dataset.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
