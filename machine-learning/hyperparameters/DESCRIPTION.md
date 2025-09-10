@@ -36,3 +36,5 @@ print(f' Model Loss: {loss:.4f}')
 ```
 
 To complete this challenge, modify the `n_estimators` hyperparameter so that your model's loss on the test dataset is `0.0252`. HINT: The correct number of `n_estimators` will be in the range from 10 to 200 and will be an increment of 10 (no need to try 54 or 123 for example).
+
+You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `verify <your_file>.py`.
