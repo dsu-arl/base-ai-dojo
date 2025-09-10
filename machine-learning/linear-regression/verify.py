@@ -19,7 +19,7 @@ class Validator:
         self._y_test = None
         self._model = None
         self._y_pred = None
-        self._accuracy = None
+        self._mse = None
 
         self._checks = [
             self._step_1_check, self._step_2_check, self._step_3_check,
@@ -60,13 +60,13 @@ class Validator:
 
     def _step_2_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Initialize a logistic regression model.
+        Step Goal: Create a linear regression model.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
         :rtype: tuple[bool, str]
         """
-        function_name = 'LogisticRegression'
+        function_name = 'LinearRegression'
         function_calls = find_function_call(self._lines, function_name)
 
         if function_not_called(function_calls):
@@ -125,7 +125,7 @@ class Validator:
     
     def _step_4_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Make predictions on the test iris dataset using the trained logistic regression model.
+        Step Goal: Make predictions on the test dataset using the trained linear regression model.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
@@ -165,13 +165,13 @@ class Validator:
     
     def _step_5_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Retrieve the model's test dataset accuracy.
+        Step Goal: Get the mean squared error from the test dataset and the linear regression model's predictions.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
         :rtype: tuple[bool, str]
         """
-        function_name = 'accuracy_score'
+        function_name = 'mean_squared_error'
         function_calls = find_function_call(self._lines, function_name)
 
         if function_not_called(function_calls):
@@ -184,7 +184,7 @@ class Validator:
         if not isinstance(function_call.variable, str) or function_call.variable is None:
             return False, f"{function_name}() should only be assigned to a single variable"
 
-        self._accuracy = function_call.variable
+        self._mse = function_call.variable
 
         check_passed = True
         # Solution 1
@@ -205,27 +205,27 @@ class Validator:
     
     def _step_6_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Print out the model's accuracy
+        Step Goal: Print the value of the MSE variable.
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
         :rtype: tuple[bool, str]
         """
         function_name = 'print'
         function_calls = find_function_call(self._lines, function_name)
-        
+
         if function_not_called(function_calls):
             return False, f"{function_name}() isn't called"
         if len(function_calls) != 1:
             return False, f"{function_name}() shouldn't be called more than once"
-        
+
         function_call = FunctionCall.from_dict(function_calls[0])
 
         if function_call.variable is not None:
             return False, f"{function_name}() shouldn't be assigned to any variables"
 
-        if self._accuracy not in function_call.args:
-            return False, 'Are you printing out the correct variable for the accuracy?'
-        
+        if function_call.args != [self._mse]:
+            return False, 'Are you printing out the correct variable for the MSE?'
+
         if function_call.kwargs != {} and function_call.args:
             return False, "You don't need any keyword arguments for this print statement"
 

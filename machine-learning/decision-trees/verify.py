@@ -60,13 +60,13 @@ class Validator:
 
     def _step_2_check(self) -> Tuple[bool, str]:
         """
-        Step Goal: Initialize a logistic regression model.
+        Step Goal: Initialize a decision tree classifier model.
 
         :return: A tuple containing a boolean indicating success or failure of the validation,
                 and a string message providing error details if failure.
         :rtype: tuple[bool, str]
         """
-        function_name = 'LogisticRegression'
+        function_name = 'DecisionTreeClassifier'
         function_calls = find_function_call(self._lines, function_name)
 
         if function_not_called(function_calls):
