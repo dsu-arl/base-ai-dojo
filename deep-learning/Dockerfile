@@ -6,6 +6,8 @@ RUN apt update && apt install -y python3.12 python3.12-venv python3-pip
 # Necessary Python libraries
 RUN python3.12 -m pip install --break-system-packages numpy tensorflow
 
+RUN apt install nano -y
+
 RUN if id ubuntu >/dev/null 2>&1; then userdel -f -r ubuntu; fi && \
     useradd -s /bin/bash -m hacker && \
     passwd -d hacker && \
