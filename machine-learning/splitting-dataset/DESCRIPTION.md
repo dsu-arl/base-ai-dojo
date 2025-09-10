@@ -59,4 +59,4 @@ Complete the following steps to pass this challenge:
 2. Create `y` using `np.random.randint()` which has 500 samples and outputs either 0 or 1
 3. Split the dataset where the train dataset is 70% of the original dataset
 
-You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `verify <your_file>.py`.
+You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `/challenge/verify <your_file>.py`.

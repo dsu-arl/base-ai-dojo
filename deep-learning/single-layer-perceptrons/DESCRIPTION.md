@@ -81,7 +81,7 @@ Create a new Python file in `/home/hacker` directory and follow these steps to c
 7. Round predictions from the model to 0 or 1 using `.round()`.
 8. Print the rounded predictions. Ensure your code prints the rounded predictions in the exactly the same output format as shown below.
 9. Save your program and run it to test the output.
-10. To get the flag, run `/challenge/verify <yourfile>.py` to verify your solution.
+10. To get the flag, run `/challenge/verify <your_file>.py` to verify your solution. You can test your solution by running `/usr/bin/python3 <your_file>.py`
 
 Example output:
 ```commandline
