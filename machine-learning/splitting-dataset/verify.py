@@ -1,5 +1,3 @@
-"""Verification script for Splitting Datasets challenge."""
-
 #!/usr/bin/exec-suid -- /usr/bin/python3.12 -I
 import sys
 
