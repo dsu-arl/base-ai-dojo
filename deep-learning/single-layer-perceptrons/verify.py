@@ -5,7 +5,13 @@ sys.path.append("/challenge")
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
-from paceAITester.datatypes import AssignStatement, FunctionCallStatement, ImportStatement, ImportFromStatement, Statement
+from paceAITester.datatypes import (
+    AssignStatement,
+    FunctionCallStatement,
+    ImportStatement,
+    ImportFromStatement,
+    Statement,
+)
 from paceAITester.parser import StatementParser
 from paceAITester.utils import (
     find_function_calls,
@@ -136,128 +142,160 @@ class Validator:
 
         return True
 
-    def _find_library_import(self, library_name) -> Union[ImportStatement, ImportFromStatement]:
+    def _find_library_import(
+        self, library_name
+    ) -> Optional[Union[ImportStatement, ImportFromStatement]]:
         for statement in self.lines:
-            
+            if isinstance(statement, ImportStatement) and statement.names == [
+                library_name
+            ]:
+                return statement
+            if (
+                isinstance(statement, ImportFromStatement)
+                and statement.module == library_name
+            ):
+                return statement
+        return None
 
     def step_1_check(self) -> Tuple[bool, str]:
-        """Step Goal: Import tensorflow with the alias 'tf' and numpy with the alias 'np'.
+        """Step Goal: Import tensorflow with the alias 'tf' and numpy with the alias
+        'np'.
 
         Returns:
             Tuple[bool, str]: A tuple containing a boolean indicating success or
                 failure of the validation, and a string message providing error details
                 if failure.
         """
-        with open(self.script_path, "r") as f:
-            file_lines = f.read().split("\n")
+        tensorflow_import = self._find_library_import("tensorflow")
+        if tensorflow_import is None:
+            return False, "Missing or incorrect tensorflow import"
 
-        if "import tensorflow as tf" not in file_lines:
-            return (
-                False,
-                "Missing or incorrect tensorflow import line, did you import it with the specified alias?",
-            )
+        if tensorflow_import.alias != "tf":
+            return False, "Missing or incorrect tensorflow import alias"
 
-        if "import numpy as np" not in file_lines:
-            return (
-                False,
-                "Missing or incorrect numpy import line, did you import it with the specified alias?",
-            )
+        numpy_import = self._find_library_import("numpy")
+        if numpy_import is None:
+            return False, "Missing or incorrect numpy import"
+
+        if numpy_import.alias != "np":
+            return False, "Missing or incorrect numpy import alias"
 
         return True, ""
 
     def step_2_check(self) -> Tuple[bool, str]:
-        """
-        Step Goal: Define dataset for OR operation.
+        """Step Goal: Define dataset for OR operation.
 
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
         """
         function_name = "np.array"
-        function_calls = find_function_call(self.lines, function_name)
+        statements = find_function_calls(self.lines, function_name)
 
-        if function_not_called(function_calls):
-            return False, f"{function_name} isn't called"
+        if len(statements) == 0:
+            return False, "np.array isn't called"
 
-        if len(function_calls) != 2:
+        if len(statements) != 2:
             return (
                 False,
-                f"{function_name} should only be called twice, once for X and once for y",
+                "np.array should only be called twice, once for X and once for y",
             )
 
-        func_call_for_X = FunctionCall.from_dict(function_calls[0])
-        func_call_for_y = FunctionCall.from_dict(function_calls[1])
+        # Make sure all statements are assignments
+        if not all(isinstance(statement, AssignStatement) for statement in statements):
+            return False, "np.array should be assigned to X and y variables."
 
-        if func_call_for_X.variable is None or func_call_for_y.variable is None:
-            return False, f"{function_name} should be assigned to a variable"
+        correct_input_statement = FunctionCallStatement(
+            func="np.array", args=["[[0, 0], [0, 1], [1, 0], [1, 1]]"], kwargs={}
+        )
+        correct_output_statement = FunctionCallStatement(
+            func="np.array", args=["[[0], [1], [1], [1]]"], kwargs={}
+        )
+        input_data_statement = None
+        output_data_statement = None
+        for statement in statements:
+            if (
+                statement.value == correct_input_statement
+                and input_data_statement is None
+            ):
+                input_data_statement = statement
+            elif (
+                statement.value == correct_output_statement
+                and output_data_statement is None
+            ):
+                output_data_statement = statement
 
-        self.X = func_call_for_X.variable
-        self.y = func_call_for_y.variable
+        if input_data_statement is None:
+            return False, "Input data passed to np.array doesn't match instructions."
 
-        if func_call_for_X.args != ["[[0, 0], [0, 1], [1, 0], [1, 1]]"]:
-            return False, f"Data passed to {self.X} doesn't match instructions."
+        if output_data_statement is None:
+            return False, "Output data passed to np.array doesn't match instructions."
 
-        if func_call_for_y.args != ["[[0], [1], [1], [1]]"]:
-            return False, f"Data passed to {self.y} doesn't match instructions."
+        self.user_vars.x = input_data_statement.targets[0]
+        self.user_vars.y = output_data_statement.targets[0]
 
         return True, ""
 
     def step_3_check(self) -> Tuple[bool, str]:
-        """
-        Step Goal: Create single-layer perceptron with one dense layer, input shape of 2, sigmoid activation.
+        """Step Goal: Create single-layer perceptron with one dense layer, input shape
+        of 2, sigmoid activation.
 
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
         """
         function_name = "tf.keras.Sequential"
-        function_calls = find_function_call(self.lines, function_name)
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=True
+        )
+        if error_msg:
+            return False, error_msg
 
-        if function_not_called(function_calls):
-            return False, f"{function_name} isn't called"
-        if len(function_calls) > 1:
-            return False, f"{function_name} should only be called once"
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
 
-        function_call = FunctionCall.from_dict(function_calls[0])
-        if output_not_assigned_to_variable(function_call):
-            return False, f"{function_name} output should be assigned to a variable"
-
-        self.model = function_call.variable
-
-        # Make sure that args only contains Dense layer with correct arguments
-        solution_args = [
-            "[tf.keras.layers.Input(shape=(2,)), tf.keras.layers.Dense(units=1, activation='sigmoid')]"
-        ]
-        if function_call.args != solution_args:
+        correct_function_call = FunctionCallStatement(
+            func="tf.keras.Sequential",
+            args=[
+                "[tf.keras.layers.Input(shape=(2,)), "
+                "tf.keras.layers.Dense(units=1, activation='sigmoid')]"
+            ],
+            kwargs={},
+        )
+        if function_call != correct_function_call:
             return False, "Missing or incorrect layers for perceptron"
+
+        self.user_vars.model = statement.targets[0]
 
         return True, ""
 
     def step_4_check(self) -> Tuple[bool, str]:
+        """Step Goal: Compile the model with adam optimzier and binary_crossentropy loss
+        function.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
         """
-        Step Goal: Compile the model with adam optimzier and binary_crossentropy loss function.
+        function_name = f"{self.user_vars.model}.compile"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=False
+        )
+        if error_msg:
+            return False, error_msg
 
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
-        """
-        function_name = f"{self.model}.compile"
-        function_calls = find_function_call(self.lines, function_name)
-
-        if function_not_called(function_calls):
-            return False, f"{function_name}() isn't called"
-        if len(function_calls) > 1:
-            return False, f"{function_name}() should only be called once"
-
-        function_call = FunctionCall.from_dict(function_calls[0])
-        if function_call.variable is not None:
-            return False, f"{function_name}() shouldn't be assigned to a variable"
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
 
         solution_kwargs = {"optimizer": "'adam'", "loss": "'binary_crossentropy'"}
         if function_call.kwargs != solution_kwargs:
             return (
                 False,
-                f"Missing or incorrect optimizer and loss function passed to {function_name}()",
+                "Missing or incorrect optimizer and loss "
+                "function passed to model.compile()",
             )
 
         return True, ""
