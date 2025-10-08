@@ -1,8 +1,5 @@
-[submodule "machine-learning/random-forests/paceAITester"]
-	path = machine-learning/random-forests/paceAITester
-	url = https://github.com/dsu-arl/paceAITester
-[submodule "machine-learning/hyperparameters/paceAITester"]
-	path = machine-learning/hyperparameters/paceAITester
+[submodule "deep-learning/single-layer-perceptrons/paceAITester"]
+	path = deep-learning/single-layer-perceptrons/paceAITester
 	url = https://github.com/dsu-arl/paceAITester
 [submodule "machine-learning/splitting-dataset/paceAITester"]
 	path = machine-learning/splitting-dataset/paceAITester
@@ -16,6 +13,9 @@
 [submodule "machine-learning/decision-trees/paceAITester"]
 	path = machine-learning/decision-trees/paceAITester
 	url = https://github.com/dsu-arl/paceAITester
-[submodule "deep-learning/single-layer-perceptrons/paceAITester"]
-	path = deep-learning/single-layer-perceptrons/paceAITester
+[submodule "machine-learning/random-forests/paceAITester"]
+	path = machine-learning/random-forests/paceAITester
+	url = https://github.com/dsu-arl/paceAITester
+[submodule "machine-learning/hyperparameters/paceAITester"]
+	path = machine-learning/hyperparameters/paceAITester
 	url = https://github.com/dsu-arl/paceAITester

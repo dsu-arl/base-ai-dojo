@@ -27,6 +27,10 @@ class UserVariables:
 
 
 class Validator:
+    """Validator class that runs verification checks on user submitted code for
+    challenge.
+    """
+
     def __init__(self, script_path: str):
         self.parser = StatementParser(script_path)
         self.lines = self.parser.parse()
