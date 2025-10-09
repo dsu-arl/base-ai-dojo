@@ -122,4 +122,4 @@ Example output:
  [1.]]
 ```
 
-NOTE: Your output results may differ due to the model randomly initializing its weights at the beginning of training.
+NOTE: Your output results may differ due to the model randomly initializing its weights at the beginning of training. Running the Python script may take some time due to importing PyTorch.
