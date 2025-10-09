@@ -1,55 +1,117 @@
-from base_test import BaseTestValidator
+"""Unit tests for the step_6_check function."""
+
 import unittest
+from base_test import BaseTestValidator
 
 
 class TestStep6Check(BaseTestValidator):
+    """Unit tests for the step_6_check method of the Validator class.
+
+    This class tests the validation logic of the step_6_check method, which verifies
+    that the user's code correctly prints the mean squared error calculated in the
+    previous step. Inherits from BaseTestValidator to reuse common setup and utility
+    methods for creating Validator instances.
+
+    Args:
+        BaseTestValidator (class): Base class providing shared test utilities, including
+            the create_validator method.
+    """
+
     def test_success(self):
-        content = 'print(mse)'
+        """Tests step_6_check with valid code that correctly prints out the mean
+        squared error.
+
+        Verifies that step_6_check returns (True, "") when the code uses the print
+        function to output the mean squared error.
+        """
+        content = "print(mse)"
         validator = self.create_validator(content)
-        validator._mse = 'mse'
-        is_correct, msg = validator._step_6_check()
+        validator.user_vars.mse = "mse"
+        is_correct, msg = validator.step_6_check()
         self.assertTrue(is_correct)
-        self.assertEqual(msg, '')
+        self.assertEqual(msg, "")
 
     def test_missing_function_call(self):
-        content = ''
+        """Tests step_6_check when print is not called in the code.
+
+        Verifies that step_6_check returns (False, "print() isn't called") when the code
+        is empty, indicating the function was not called.
+        """
+        content = ""
         validator = self.create_validator(content)
-        is_correct, msg = validator._step_6_check()
+        is_correct, msg = validator.step_6_check()
         self.assertFalse(is_correct)
         self.assertEqual(msg, "print() isn't called")
-    
+
     def test_function_called_more_than_once(self):
+        """Tests step_6_check when print is called multiple times.
+
+        Verifies that step_6_check returns (False, "print() should only be called once")
+        when the code contains multiple calls to print, indicating a violation of the
+        requirement to call the function exactly once.
+        """
         content = """
 print(mse)
 print(mse)
 """
         validator = self.create_validator(content)
-        is_correct, msg = validator._step_6_check()
+        is_correct, msg = validator.step_6_check()
         self.assertFalse(is_correct)
-        self.assertEqual(msg, "print() shouldn't be called more than once")
+        self.assertEqual(msg, "print() should only be called once")
 
     def test_output_assigned(self):
-        content = 'test = print(mse)'
+        """Tests step_6_check when the output of print is attempted to be stored in a
+        variable.
+
+        Verifies that step_6_check returns (False, "print() shouldn't be assigned to any
+        variables") when print is called with the output is stored in a variable.
+        """
+        content = "test = print(mse)"
         validator = self.create_validator(content)
-        is_correct, msg = validator._step_6_check()
+        is_correct, msg = validator.step_6_check()
         self.assertFalse(is_correct)
         self.assertEqual(msg, "print() shouldn't be assigned to any variables")
 
     def test_incorrect_args(self):
-        content = 'print()'
-        validator = self.create_validator(content)
-        is_correct, msg = validator._step_6_check()
-        self.assertFalse(is_correct)
-        self.assertEqual(msg, 'Are you printing out the correct variable for the MSE?')
-    
+        """Tests step_6_check when print is called with incorrect arguments.
+
+        Verifies that step_6_check returns (False, "Are you printing out the correct
+        variable for the MSE?") when print is called with the incorrect variable name
+        for the variable containing the calculated mean squared error. Uses subTests to
+        check multiple argument error cases.
+        """
+        cases = [
+            {"desc": "No variable given to print", "content": "print()"},
+            {
+                "desc": "Incorrect variable name given",
+                "content": "print(incorrect_mse)",
+            },
+        ]
+        for case in cases:
+            with self.subTest(case=case["desc"]):
+                validator = self.create_validator(case["content"])
+                validator.user_vars.mse = "mse"
+                is_correct, msg = validator.step_6_check()
+                self.assertFalse(is_correct)
+                self.assertEqual(
+                    msg, "Are you printing out the correct variable for the MSE?"
+                )
+
     def test_incorrect_kwargs(self):
-        content = 'print(mse, test=mse)'
+        """Tests step_6_check when print is called with incorrect keyword arguments.
+
+        Verifies that step_6_check returns (False, "You don't need any keyword arguments
+        for this print statement") when print is called with any keyword arguments.
+        """
+        content = "print(mse, test=mse)"
         validator = self.create_validator(content)
-        validator._mse = 'mse'
-        is_correct, msg = validator._step_6_check()
+        validator.user_vars.mse = "mse"
+        is_correct, msg = validator.step_6_check()
         self.assertFalse(is_correct)
-        self.assertEqual(msg, "You don't need any keyword arguments for this print statement")
+        self.assertEqual(
+            msg, "You don't need any keyword arguments for this print statement"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
