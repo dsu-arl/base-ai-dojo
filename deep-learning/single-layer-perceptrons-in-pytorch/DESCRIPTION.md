@@ -12,7 +12,7 @@ Letâ€™s start with the tools we need. Think of `torch` as the heart of PyTorchâ€
 ```python
 class Perceptron(nn.Module):
     def __init__(self):
-        super(Perceptron, self).__init__()
+        super().__init__()
         self.linear = nn.Linear(2, 1)
         self.sigmoid = nn.Sigmoid()
     
