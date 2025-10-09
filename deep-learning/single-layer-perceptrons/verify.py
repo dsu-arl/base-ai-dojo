@@ -287,8 +287,7 @@ class Validator:
         if error_msg:
             return False, error_msg
 
-        statement: AssignStatement = statements[0]
-        function_call = self._get_function_call(statement)
+        function_call: FunctionCallStatement = statements[0]
 
         solution_kwargs = {"optimizer": "'adam'", "loss": "'binary_crossentropy'"}
         if function_call.kwargs != solution_kwargs:
@@ -301,133 +300,124 @@ class Validator:
         return True, ""
 
     def step_5_check(self) -> Tuple[bool, str]:
+        """Step Goal: Train the model for 100 epochs.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
         """
-        Step Goal: Train the model for 100 epochs.
+        function_name = f"{self.user_vars.model}.fit"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=False
+        )
+        if error_msg:
+            return False, error_msg
 
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
-        """
-        function_name = f"{self.model}.fit"
-        function_calls = find_function_call(self.lines, function_name)
+        function_call: FunctionCallStatement = statements[0]
 
-        if function_not_called(function_calls):
-            return False, f"{function_name}() isn't called"
-        if len(function_calls) > 1:
-            return False, f"{function_name}() should only be called once"
-
-        function_call = FunctionCall.from_dict(function_calls[0])
-        if function_call.variable is not None:
-            return False, f"{function_name}() shouldn't be assigned to a variable"
-
-        solution_args = [self.X, self.y]
+        solution_args = [self.user_vars.x, self.user_vars.y]
         if function_call.args != solution_args:
             return (
                 False,
-                f"Missing or incorrect parameters, are you passing your dataset and labels to {function_name}()?",
+                "Missing or incorrect parameters, are you passing your "
+                "dataset and labels to model.fit()?",
             )
 
         solution_kwargs = {"epochs": "100", "verbose": "1"}
         if function_call.kwargs != solution_kwargs:
             return (
                 False,
-                f"Missing or incorrect parameters, are you training for 100 epochs and outputting the training output?",
+                "Missing or incorrect parameters, are you training for "
+                "100 epochs and outputting the training output?",
             )
 
         return True, ""
 
     def step_6_check(self) -> Tuple[bool, str]:
+        """Step Goal: Use the trained model to make predictions for X.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
         """
-        Step Goal: Use the trained model to make predictions for X, rounding predictions to 0 or 1.
+        function_name = f"{self.user_vars.model}.predict"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=True
+        )
+        if error_msg:
+            return False, error_msg
 
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
-        """
-        # Validation for model.predict()
-        predict_function_name = f"{self.model}.predict"
-        function_calls = find_function_call(self.lines, predict_function_name)
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
 
-        if function_not_called(function_calls):
-            return False, f"{predict_function_name}() isn't called"
-        if len(function_calls) > 1:
-            return False, f"{predict_function_name}() should only be called once"
+        if function_call.args != [self.user_vars.x]:
+            return False, "model.predict() should take a single argument X"
 
-        function_call = FunctionCall.from_dict(function_calls[0])
-        if output_not_assigned_to_variable(function_call):
+        if function_call.kwargs != {}:
             return (
                 False,
-                f"{predict_function_name}() output should be assigned to a variable",
+                "model.predict() should not have any keyword "
+                "arguments for this challenge",
             )
 
-        self.predictions = function_call.variable
-
-        solution_args = [self.X]
-        if function_call.args != solution_args:
-            return (
-                False,
-                f"{predict_function_name}() should take a single argument {self.X}",
-            )
-
-        solution_kwargs = {}
-        if function_call.kwargs != solution_kwargs:
-            return (
-                False,
-                f"{predict_function_name}() should not have any keyword arguments for this challenge",
-            )
+        self.user_vars.predictions = statement.targets[0]
 
         return True, ""
 
     def step_7_check(self) -> Tuple[bool, str]:
-        # Validation for predictions.round()
-        function_name = f"{self.predictions}.round"
-        function_calls = find_function_call(self.lines, function_name)
+        """Step Goal: Round the predicted value to either 0 or 1.
 
-        if function_not_called(function_calls):
-            return False, f"{function_name}() isn't called"
-        if len(function_calls) > 1:
-            return False, f"{function_name}() should only be called once"
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
+        """
+        function_name = f"{self.user_vars.predictions}.round"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=True
+        )
+        if error_msg:
+            return False, error_msg
 
-        function_call = FunctionCall.from_dict(function_calls[0])
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
 
         if function_call.args != [] or function_call.kwargs != {}:
             return (
                 False,
-                f"{function_name}() shouldn't have any parameters passed to it for this challenge",
+                f"{function_name}() shouldn't have any parameters "
+                "passed to it for this challenge",
             )
 
-        # Reassign self.predictions if user stored result in new variable after rounding
-        if (
-            function_call.variable is not None
-            and function_call.variable != self.predictions
-        ):
-            self.predictions = function_call.variable
+        self.user_vars.predictions = statement.targets[0]
 
         return True, ""
 
     def step_8_check(self) -> Tuple[bool, str]:
-        """
-        Step Goal: Print the rounded predictions from the trained model.
+        """Step Goal: Print the rounded predictions from the trained model.
 
-        :return: A tuple containing a boolean indicating success or failure of the validation,
-                and a string message providing error details if failure.
-        :rtype: tuple[bool, str]
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
         """
         function_name = "print"
-        function_calls = find_function_call(self.lines, function_name)
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=False
+        )
+        if error_msg:
+            return False, error_msg
 
-        if function_not_called(function_calls):
-            return False, f"{function_name}() isn't called"
-        if len(function_calls) > 1:
-            return False, f"{function_name}() should only be called once"
+        function_call: FunctionCallStatement = statements[0]
 
-        function_call = FunctionCall.from_dict(function_calls[0])
-
-        solution_args = [self.predictions]
+        solution_args = [self.user_vars.predictions]
         if function_call.args != solution_args:
             return (
                 False,
-                f"Incorrect parameters passed to {function_name}(), are you passing your rounded predictions to the {function_name}() function?",
+                f"Incorrect parameters passed to {function_name}(), are you passing "
+                f"your rounded predictions to the {function_name}() function?",
             )
 
         return True, ""
