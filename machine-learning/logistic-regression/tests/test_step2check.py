@@ -21,8 +21,8 @@ class TestStep2Check(BaseTestValidator):
         """Tests step_2_check with valid code that calls LogisticRegression correctly.
 
         Verifies that step_2_check returns (True, "") when the script contains
-        "model = LogisticRegression()", and that the variable 'model' is stored correctly
-        in validator.user_vars.model.
+        "model = LogisticRegression()", and that the variable 'model' is stored
+        correctly in validator.user_vars.model.
         """
         content = "model = LogisticRegression()"
         validator = self.create_validator(content)
@@ -64,8 +64,8 @@ model = LogisticRegression()
         variables.
 
         Verifies that step_2_check returns (False, "Make sure you store the output of
-        LogisticRegression() in a variable") when the code calls LogisticRegression with not
-        output variables specified.
+        LogisticRegression() in a variable") when the code calls LogisticRegression with
+        no output variables specified.
         """
         content = "LogisticRegression()"
         validator = self.create_validator(content)
@@ -79,8 +79,8 @@ model = LogisticRegression()
         """Tests step_2_check when LogisticRegression is called with arguments.
 
         Verifies that step_2_check returns (False, "You shouldn't be passing any
-        parameters to LogisticRegression() for this challenge") when LogisticRegression is
-        called with arguments. Uses subTests to check multiple argument error cases.
+        parameters to LogisticRegression() for this challenge") when LogisticRegression
+        is called with arguments. Uses subTests to check multiple argument error cases.
         """
         cases = [
             {"desc": "Has args", "content": "model = LogisticRegression(23)"},

@@ -4,16 +4,18 @@ import sys
 sys.path.append("/challenge")
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 from paceAITester.datatypes import (
     AssignStatement,
     ClassDefStatement,
+    ForStatement,
     FunctionCallStatement,
     FunctionDefStatement,
     GenericStatement,
     ImportStatement,
     ImportFromStatement,
     Statement,
+    WithStatement,
 )
 from paceAITester.parser import StatementParser
 from paceAITester.utils import (
@@ -107,7 +109,7 @@ class Validator:
 
     def _find_function_call(
         self, function_name: str, statements: List[Statement] = None
-    ) -> Optional[FunctionCallStatement]:
+    ) -> Optional[AssignStatement | FunctionCallStatement]:
         if statements is None:
             statements = self.lines
 
@@ -115,6 +117,9 @@ class Validator:
             if (
                 isinstance(statement, FunctionCallStatement)
                 and statement.func == function_name
+            ) or (
+                isinstance(statement, AssignStatement)
+                and statement.value.func == function_name
             ):
                 return statement
 
@@ -272,6 +277,215 @@ class Validator:
 
         return True, ""
 
+    def _validate_loss_function(self) -> Tuple[bool, str]:
+        function_name = "nn.BCELoss"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=True
+        )
+        if error_msg:
+            return False, error_msg
+
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
+
+        if function_call.args != [] or function_call.kwargs != {}:
+            return (
+                False,
+                f"You shouldn't be passing any parameters to {function_name}() "
+                "for this challenge",
+            )
+
+        self.model_user_vars.criterion = statement.targets[0]
+        return True, ""
+
+    def _validate_optimizer(self) -> Tuple[bool, str]:
+        function_name = "torch.optim.Adam"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=True
+        )
+        if error_msg:
+            return False, error_msg
+
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
+
+        correct_args = [f"{self.model_user_vars.model}.parameters()"]
+        if function_call.args != correct_args or function_call.kwargs != {}:
+            return (
+                False,
+                f"Incorrect parameters for {function_name}(), are you correctly "
+                "passing the model parameters to it?",
+            )
+
+        self.model_user_vars.optimizer = statement.targets[0]
+        return True, ""
+
+    def _validate_basic_call(
+        self, function_name: str, should_assign: Optional[bool] = None
+    ) -> Tuple[Optional[str], List[Any]]:
+        """Validates basic function call requirements.
+
+        Args:
+            function_name (str): Name of the function to validate.
+            should_assign (Optional[bool], optional): If True, requires assignment;
+                if False, forbids it; if None, doesn't check.
+
+        Returns:
+            Tuple[Optional[str], List[Any]]: Tuple of (error_message, statements). If
+                error_message is None, validation passed
+        """
+        statements = find_function_calls(self.lines, function_name)
+
+        if len(statements) == 0:
+            return f"{function_name}() isn't called", statements
+
+        if len(statements) != 1:
+            return f"{function_name}() should only be called once", statements
+
+        if should_assign is True and not isinstance(statements[0], AssignStatement):
+            return (
+                f"Make sure you store the output of {function_name}() in a variable",
+                statements,
+            )
+
+        if should_assign is False and isinstance(statements[0], AssignStatement):
+            return (
+                f"{function_name}() shouldn't be assigned to any variables",
+                statements,
+            )
+
+        return None, statements
+
+    def _get_function_call(
+        self, statement: Statement, allow_assign: bool = True
+    ) -> FunctionCallStatement:
+        """Extracts FunctionCallStatement from a statement.
+
+        Args:
+            statement (Statement): The statement to extract from.
+            allow_assign (bool, optional): Whether to extract from AssignStatement.
+                Defaults to True.
+
+        Returns:
+            FunctionCallStatement: Extracted function call statement.
+
+        Raises:
+            TypeError: If the statement type is unexpected.
+        """
+        if isinstance(statement, FunctionCallStatement):
+            return statement
+
+        if allow_assign and isinstance(statement, AssignStatement):
+            if isinstance(statement.value, FunctionCallStatement):
+                return statement.value
+
+        raise TypeError(
+            f"Expected FunctionCallStatement, got {type(statement).__name__}"
+        )
+
+    def _validate_epochs(self, for_loop_iter: str) -> Tuple[bool, str]:
+        if for_loop_iter.startswith("range(") and for_loop_iter.endswith(")"):
+            epochs_variable_name = for_loop_iter.split("(")[1].split(")")[0]
+            if epochs_variable_name.isdigit():
+                if int(epochs_variable_name) != 100:
+                    return False, "Incorrect epoch count for training loop"
+            else:
+                variables = self.parser.retrieve_variable_values()
+                if (
+                    epochs_variable_name in variables
+                    and variables[epochs_variable_name] != 100
+                ):
+                    return False, "Incorrect epoch count for training loop"
+        else:
+            return False, "Missing training loop"
+
+        return True, ""
+
+    def _validate_forward_pass(
+        self, for_loop_body: List[Statement]
+    ) -> Tuple[bool, str]:
+        model_predictions = self._find_assignment(
+            value=FunctionCallStatement(
+                func=self.model_user_vars.model, args=[self.data_user_vars.x], kwargs={}
+            ),
+            statements=for_loop_body,
+        )
+        if model_predictions is None:
+            return False, "Missing or incorrect forward pass in training loop"
+
+        self.data_user_vars.outputs = model_predictions.targets[0]
+
+        calculate_loss = self._find_assignment(
+            value=FunctionCallStatement(
+                func=self.model_user_vars.criterion,
+                args=[self.data_user_vars.outputs, self.data_user_vars.y],
+                kwargs={},
+            ),
+            statements=for_loop_body,
+        )
+        if calculate_loss is None:
+            return False, "Missing or incorrect forward pass in training loop"
+
+        self.data_user_vars.loss = calculate_loss.targets[0]
+        return True, ""
+
+    def _validate_backward_pass(
+        self, for_loop_body: List[Statement]
+    ) -> Tuple[bool, str]:
+        clear_gradients = self._find_function_call(
+            f"{self.model_user_vars.optimizer}.zero_grad", for_loop_body
+        )
+        compute_gradients = self._find_function_call(
+            f"{self.data_user_vars.loss}.backward", for_loop_body
+        )
+        update_weights = self._find_function_call(
+            f"{self.model_user_vars.optimizer}.step", for_loop_body
+        )
+        if (
+            clear_gradients is None
+            or compute_gradients is None
+            or update_weights is None
+        ):
+            return False, "Missing or incorrect backward pass in training loop"
+
+        return True, ""
+
+    def _validate_inference_call(self, with_body: List[Statement]) -> Tuple[bool, str]:
+        inference_statement = self._find_function_call(
+            function_name=self.model_user_vars.model, statements=with_body
+        )
+        if inference_statement is None:
+            return False, "Missing code to make predictions using the trained model"
+        if isinstance(inference_statement, FunctionCallStatement):
+            return False, "Prediction output not stored in a variable"
+        if (
+            inference_statement.value.args != [self.data_user_vars.x]
+            or inference_statement.value.kwargs != {}
+        ):
+            return False, "Incorrect data passed to model for inference"
+
+        self.data_user_vars.predictions = inference_statement.targets[0]
+        return True, ""
+
+    def _validate_round_call(self, with_body: List[Statement]) -> Tuple[bool, str]:
+        round_function_name = f"{self.data_user_vars.predictions}.round"
+        round_statement = self._find_function_call(
+            function_name=round_function_name, statements=with_body
+        )
+        if round_statement is None:
+            return False, f"Missing {round_function_name}() call to round predictions"
+        if isinstance(round_statement, FunctionCallStatement):
+            return False, f"{round_function_name}() output not stored in a variable"
+        if round_statement.value.args != [] or round_statement.value.kwargs != {}:
+            return (
+                False,
+                f"You shouldn't be passing any parameters to {round_function_name}() "
+                "for this challenge",
+            )
+
+        self.data_user_vars.predictions = round_statement.targets[0]
+        return True, ""
+
     def step_1_check(self) -> Tuple[bool, str]:
         """Step Goal: Import the libraries torch, torch.nn with alias 'nn', and numpy
         with alias 'np'.
@@ -362,25 +576,164 @@ class Validator:
         return True, ""
 
     def step_5_check(self) -> Tuple[bool, str]:
-        # Checks if perceptron model is correctly instantiated
-        pass
+        """Step Goal: Instantiate the perceptron model.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
+        """
+        function_name = "Perceptron"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=True
+        )
+        if error_msg:
+            return False, error_msg
+
+        statement: AssignStatement = statements[0]
+        function_call = self._get_function_call(statement)
+
+        if function_call.args != [] or function_call.kwargs != {}:
+            return (
+                False,
+                f"You shouldn't be passing any parameters to {function_name}() "
+                "for this challenge",
+            )
+
+        self.model_user_vars.model = statement.targets[0]
+
+        return True, ""
 
     def step_6_check(self) -> Tuple[bool, str]:
-        # Checks if loss function and optimizer are correctly defined
-        pass
+        """Step Goal: Define the loss function and optimizer
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
+        """
+        for validate_function in [
+            self._validate_loss_function,
+            self._validate_optimizer,
+        ]:
+            is_valid, error_msg = validate_function()
+            if not is_valid:
+                return False, error_msg
+
+        return True, ""
 
     def step_7_check(self) -> Tuple[bool, str]:
-        # Checks if training loop is correctly implemented
-        # Forward pass, clear previous gradients, compute gradients, update weights
-        pass
+        """Step Goal: Define training loop.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
+        """
+        for_loop = None
+        for statement in self.lines:
+            if isinstance(statement, ForStatement):
+                for_loop = statement
+                break
+        if for_loop is None:
+            return False, "Missing training loop"
+
+        for validation_func in [
+            self._validate_epochs(for_loop.iter),
+            self._validate_forward_pass(for_loop.body),
+            self._validate_backward_pass(for_loop.body),
+        ]:
+            is_valid, error_msg = validation_func
+            if not is_valid:
+                return False, error_msg
+
+        # make sure training loop contents are in correct order
+        correct_for_loop_body = [
+            AssignStatement(
+                targets=[self.data_user_vars.outputs],
+                value=FunctionCallStatement(
+                    func=self.model_user_vars.model,
+                    args=[self.data_user_vars.x],
+                    kwargs={},
+                ),
+            ),
+            AssignStatement(
+                targets=[self.data_user_vars.loss],
+                value=FunctionCallStatement(
+                    func=self.model_user_vars.criterion,
+                    args=[self.data_user_vars.outputs, self.data_user_vars.y],
+                    kwargs={},
+                ),
+            ),
+            FunctionCallStatement(
+                func=f"{self.model_user_vars.optimizer}.zero_grad", args=[], kwargs={}
+            ),
+            FunctionCallStatement(
+                func=f"{self.data_user_vars.loss}.backward", args=[], kwargs={}
+            ),
+            FunctionCallStatement(
+                func=f"{self.model_user_vars.optimizer}.step", args=[], kwargs={}
+            ),
+        ]
+        if for_loop.body[:5] != correct_for_loop_body:
+            return False, "Incorrect training loop"
+
+        return True, ""
 
     def step_8_check(self) -> Tuple[bool, str]:
-        # Make predictions using trained model and round them
-        pass
+        """Step Goal: Make predictions using the trained model and round them.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
+        """
+        with_statement = None
+        for statement in self.lines:
+            if isinstance(statement, WithStatement) and statement.items == [
+                ("torch.no_grad()", None)
+            ]:
+                with_statement = statement
+                break
+        if with_statement is None:
+            return False, "Missing code to disable gradient computation for inference"
+
+        for validate_function in [
+            self._validate_inference_call,
+            self._validate_round_call,
+        ]:
+            is_valid, error_msg = validate_function(with_statement.body)
+            if not is_valid:
+                return False, error_msg
+
+        return True, ""
 
     def step_9_check(self) -> Tuple[bool, str]:
-        # Checks if rounded predictions are converted back to NumPy array and printed out
-        pass
+        """Step Goal: Printed rounded predictions converted back to NumPy array.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating success or
+                failure of the validation, and a string message providing error details
+                if failure.
+        """
+        function_name = "print"
+        error_msg, statements = self._validate_basic_call(
+            function_name, should_assign=False
+        )
+        if error_msg:
+            return False, error_msg
+
+        function_call: FunctionCallStatement = statements[0]
+
+        correct_args = [f"{self.data_user_vars.predictions}.numpy()"]
+        if function_call.args != correct_args:
+            return (
+                False,
+                "Incorrect data to be printed out or not in the "
+                "required format for the challenge",
+            )
+
+        return True, ""
 
     def verify_code(self) -> None:
         """Runs the list of verification functions to make sure the user-submitted code

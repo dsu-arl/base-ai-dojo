@@ -52,7 +52,7 @@ model = tf.keras.Sequential([
     def test_function_more_than_once(self):
         """Tests step_3_check when tf.keras.Sequential is called more than once.
 
-        Verifies that step_3_check returns (True, "tf.keras.Sequential() should only be
+        Verifies that step_3_check returns (False, "tf.keras.Sequential() should only be
         called once") when the code contains more than one call to tf.keras.Sequential.
         """
         content = """
