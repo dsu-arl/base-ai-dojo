@@ -43,7 +43,7 @@ Our perceptron speaks PyTorch tensors, not NumPy arrays, so we need to convert o
 ```python
 model = Perceptron()
 ```
-Now we fire up our perceptron by creating an instance of the `Perceptron` class, telling it we have 2 input features (since our OR data has two inputs per sample). This sets up the model with random weights and a bias, ready to learn. It’s like turning on the machine we built, plugging it in, and getting it ready to start processing data.
+Now we fire up our perceptron by creating an instance of the `Perceptron` class. This sets up the model with random weights and a bias, ready to learn. It’s like turning on the machine we built, plugging it in, and getting it ready to start processing data.
 
 ### 6. Defining Loss Function and Optimizer
 ```python
@@ -84,7 +84,7 @@ with torch.no_grad():
 ```
 Once the model’s trained, we want to see what it’s learned. We use `torch.no_grad()` to turn off gradient tracking since we’re just predicting, not training—this saves memory and makes things faster. We pass `X` through the model to get predictions, which are probabilities between 0 and 1 because of the sigmoid. Then, we `.round()` them to get 0 or 1, matching the binary outputs we want for OR. It’s like asking the perceptron, “Alright, show me what you’ve got on the test data.”
 
-9. Printing Predictions
+### 9. Printing Predictions
 ```python
 print(predictions.numpy())
 ```
