@@ -19,6 +19,6 @@
 [submodule "machine-learning/hyperparameters/paceAITester"]
 	path = machine-learning/hyperparameters/paceAITester
 	url = https://github.com/dsu-arl/paceAITester
-[submodule "deep-learning/single-layer-perceptrons-in-pytorch/paceAITester"]
-	path = deep-learning/single-layer-perceptrons-in-pytorch/paceAITester
+[submodule "deep-learning/perceptrons-in-pytorch/paceAITester"]
+	path = deep-learning/perceptrons-in-pytorch/paceAITester
 	url = https://github.com/dsu-arl/paceAITester
