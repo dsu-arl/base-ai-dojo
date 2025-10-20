@@ -4,7 +4,7 @@ USER root
 RUN apt update && apt install -y python3.12 python3.12-venv python3-pip
 
 # Necessary Python libraries
-RUN python3.12 -m pip install --break-system-packages numpy tensorflow
+RUN python3.12 -m pip install --break-system-packages numpy tensorflow torch
 
 RUN apt install nano -y
 

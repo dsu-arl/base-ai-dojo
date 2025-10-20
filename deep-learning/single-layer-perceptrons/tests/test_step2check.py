@@ -40,7 +40,7 @@ y = np.array([[0], [1], [1], [1]])
     def test_missing_nparray(self):
         """Tests step_2_check when np.array is not called in the code.
 
-        Verifies that step_2_check returns (False, "np.array isn't called data") when
+        Verifies that step_2_check returns (False, "np.array isn't called") when
         the code doesn't contain an np.array call containing the data.
         """
         content = ""
