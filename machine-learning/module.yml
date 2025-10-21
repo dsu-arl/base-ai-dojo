@@ -1,11 +1,20 @@
 name: Machine Learning
 challenges:
-  - id: splitting-dataset
-    name: Splitting Datasets
-    allow_privileged: false
-  - id: linear-regression
-    name: Linear Regression
-    allow_privileged: false
-  - id: logistic-regression
-    name: Logistic Regression
-    allow_privileged: false
+- id: splitting-dataset
+  name: Splitting Datasets
+  allow_privileged: false
+- id: linear-regression
+  name: Linear Regression
+  allow_privileged: false
+- id: logistic-regression
+  name: Logistic Regression
+  allow_privileged: false
+- id: decision-trees
+  name: Decision Trees
+  allow_privileged: false
+- id: random-forests
+  name: Random Forests
+  allow_privileged: false
+- id: hyperparameters
+  name: Hyperparameters
+  allow_privileged: false

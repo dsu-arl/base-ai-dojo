@@ -62,4 +62,4 @@ Complete the following steps to pass this challenge:
 5. Get the mean squared error from the test dataset and the linear regression model's predictions
 6. Print the value of the MSE variable
 
-You can test your code by running `python <your_file>.py`. When you're ready to verify your solution, you can run `verify <your_file>.py`.
+You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `/challenge/verify <your_file>.py`.

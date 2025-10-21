@@ -46,9 +46,7 @@ So putting all of that together we get the following:
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 ```
 
-```
-NOTE: Another useful parameter to set in 'train_test_split()' is the 'random_state' parameter which controls the randomness of the data splitting process, ensuring that you can reproduce the same split every time you run the code.
-```
+NOTE: Another useful parameter to set in `train_test_split()` is the `random_state` parameter which controls the randomness of the data splitting process, ensuring that you can reproduce the same split every time you run the code.
 
 Create a Python file and copy and paste the following imports statements into the top of the file before starting on the steps:
 ```python
@@ -61,4 +59,4 @@ Complete the following steps to pass this challenge:
 2. Create `y` using `np.random.randint()` which has 500 samples and outputs either 0 or 1
 3. Split the dataset where the train dataset is 70% of the original dataset
 
-You can test your code by running `python <your_file>.py`. When you're ready to verify your solution, you can run `verify <your_file>.py`.
+You can test your code by running `/usr/bin/python3 <your_file>.py`. When you're ready to verify your solution, you can run `/challenge/verify <your_file>.py`.
